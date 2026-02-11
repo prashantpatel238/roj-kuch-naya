@@ -113,3 +113,19 @@ Indexes ensured via `ensurePostIndexes`:
 - unique slug (against provided existing slugs)
 
 If validation fails during article generation, `generateSeoArticle` retries and regenerates content up to a capped number of attempts.
+
+## Auto Generation Script
+
+Generate and publish content automatically with:
+
+```bash
+node scripts/autoGenerate.ts
+```
+
+What it does:
+
+- generates 2 posts per category (`daily`, `trending`, `rochak`)
+- validates each post (word count, category, title/slug uniqueness, banned phrases)
+- saves valid posts into MongoDB `posts` collection
+- writes posts with `status: "published"`
+- logs per-item failures and continues safely without crashing the full run
