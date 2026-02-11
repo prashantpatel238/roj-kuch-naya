@@ -1,0 +1,30 @@
+name: Auto Generate Content
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  auto-generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run auto generation script
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          MONGODB_DB: roz-kuch-naya
+        run: npx ts-node scripts/autoGenerate.ts || node scripts/autoGenerate.ts
