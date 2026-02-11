@@ -1,4 +1,4 @@
-import type { Collection, Db, Document, WithId } from 'mongodb';
+import type { mongo } from 'mongoose';
 
 export const POST_CATEGORIES = ['daily', 'trending', 'rochak'] as const;
 export const POST_LANGUAGES = ['hi', 'en'] as const;
@@ -21,15 +21,15 @@ export interface Post {
   createdAt: Date;
 }
 
-export type PostDocument = WithId<Post>;
+export type PostDocument = Post & { _id: mongo.ObjectId };
 
 const POSTS_COLLECTION = 'posts';
 
-export function getPostsCollection(db: Db): Collection<Post> {
+export function getPostsCollection(db: mongo.Db): mongo.Collection<Post> {
   return db.collection<Post>(POSTS_COLLECTION);
 }
 
-export async function ensurePostIndexes(db: Db): Promise<string[]> {
+export async function ensurePostIndexes(db: mongo.Db): Promise<string[]> {
   const collection = getPostsCollection(db);
 
   const indexResults = await collection.createIndexes([
@@ -59,4 +59,4 @@ export function isPostStatus(value: string): value is PostStatus {
   return (POST_STATUSES as readonly string[]).includes(value);
 }
 
-export type PostQuery = Partial<Pick<Post, 'category' | 'language' | 'status' | 'slug'>> & Document;
+export type PostQuery = mongo.Filter<Post>;
