@@ -144,3 +144,18 @@ Each section:
 - supports pagination via **Load More**
 - responds to Hindi/English language toggle in the navbar
 - uses a clean modern card-based UI
+
+## Legal & Company Pages (SEO Optimized)
+
+The following SEO-optimized pages are available:
+
+- `/privacy-policy`
+- `/disclaimer` (includes AI-generated content notice)
+- `/about`
+- `/contact`
+
+Each page includes:
+
+- dedicated metadata title and description
+- clear heading structure
+- readable long-form content suitable for search indexing
