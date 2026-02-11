@@ -1,34 +1,25 @@
 {
-  "name": "roz-kuch-naya",
+  "name": "roj-kuch-naya",
   "version": "1.0.0",
-  "private": true,
+  "description": "AI generated content portal in Hindi/English",
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "format": "prettier --check .",
-    "format:write": "prettier --write .",
     "generate": "ts-node scripts/autoGenerate.ts"
   },
   "dependencies": {
-    "mongodb": "^6.13.0",
-    "next": "14.2.26",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "dotenv": "^16.3.1",
+    "mongoose": "^7.6.1",
+    "axios": "^1.6.6",
+    "openai": "^4.9.1",
+    "next": "13.5.4",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@types/node": "^20.17.17",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
-    "autoprefixer": "^10.4.20",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "14.2.26",
-    "eslint-config-prettier": "^10.0.1",
-    "postcss": "^8.5.1",
-    "prettier": "^3.4.2",
-    "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.3"
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
   }
 }
