@@ -53,6 +53,7 @@ components/
     StatusCard.tsx
 lib/
   ai.ts
+  validator.ts
   config/
     env.ts
   db/
@@ -91,9 +92,24 @@ Indexes ensured via `ensurePostIndexes`:
 `lib/ai.ts` provides:
 
 - `generateDelhiTopics()`: returns 10 unique Delhi-focused informational topics.
-- `generateSeoArticle(topic)`: returns a full SEO-oriented article payload with:
-  - 800-1200 word validation
+- `generateSeoArticle(topic, options)`: returns a full SEO-oriented article payload with:
+  - regeneration on validation failure
+  - validator-enforced minimum 600 words
   - structured `##` (H2) and `###` (H3) sections
   - automatic disclaimer append:
     `This article is AI-generated for informational purposes only.`
   - neutral informative language safeguards (no real news-source references, no brand defamation wording, no crime accusations)
+
+## Validation Service
+
+`lib/validator.ts` validates generated article payloads for:
+
+- minimum 600 words
+- unique title (against provided existing titles)
+- no banned phrases:
+  - `according to Times of India`
+  - `reported by NDTV`
+- valid post category assignment (`daily | trending | rochak`)
+- unique slug (against provided existing slugs)
+
+If validation fails during article generation, `generateSeoArticle` retries and regenerates content up to a capped number of attempts.
