@@ -14,7 +14,7 @@ interface PostsResponse {
   items: HomePost[];
   pagination: {
     total: number;
-    offset: number;
+    page: number;
     limit: number;
     hasMore: boolean;
   };
@@ -24,7 +24,7 @@ const PAGE_SIZE = 6;
 
 export function PostSection({ title, category, language }: PostSectionProps) {
   const [items, setItems] = useState<HomePost[]>([]);
-  const [offset, setOffset] = useState(0);
+  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,14 +38,14 @@ export function PostSection({ title, category, language }: PostSectionProps) {
     setLoading(true);
     setError(null);
 
-    const nextOffset = reset ? 0 : offset;
+    const nextPage = reset ? 1 : page;
 
     try {
       const query = new URLSearchParams({
         category,
         language,
         limit: String(PAGE_SIZE),
-        offset: String(nextOffset)
+        page: String(nextPage)
       });
 
       const response = await fetch(`/api/posts?${query.toString()}`);
@@ -57,7 +57,7 @@ export function PostSection({ title, category, language }: PostSectionProps) {
       const data = (await response.json()) as PostsResponse;
 
       setItems((prev) => (reset ? data.items : [...prev, ...data.items]));
-      setOffset(nextOffset + data.items.length);
+      setPage(nextPage + 1);
       setHasMore(data.pagination.hasMore);
     } catch (requestError) {
       const message = requestError instanceof Error ? requestError.message : 'Unknown error';

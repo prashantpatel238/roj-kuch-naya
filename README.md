@@ -86,6 +86,7 @@ Indexes ensured via `ensurePostIndexes`:
 
 - `GET /api/health`: Static health response.
 - `GET /api/status`: MongoDB connectivity status (`ping`) and index initialization status.
+- `GET /api/posts?category=<daily|trending|rochak>&page=<n>&limit=<n>`: returns published posts sorted by newest `createdAt` first.
 
 ## AI Content Service
 
