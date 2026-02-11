@@ -3,21 +3,22 @@ import { getDatabase } from '@/lib/db/mongodb';
 import { getPostsCollection, isPostCategory, isPostLanguage } from '@/lib/models/post';
 
 const DEFAULT_LIMIT = 6;
-const MAX_LIMIT = 24;
+const MAX_LIMIT = 50;
+const DEFAULT_PAGE = 1;
 
 export async function GET(request: NextRequest) {
   try {
     const params = request.nextUrl.searchParams;
-    const category = params.get('category') ?? '';
-    const language = params.get('language') ?? 'en';
+    const category = params.get('category');
+    const language = params.get('language');
+    const page = clampPage(Number(params.get('page') ?? DEFAULT_PAGE));
     const limit = clampLimit(Number(params.get('limit') ?? DEFAULT_LIMIT));
-    const offset = Math.max(0, Number(params.get('offset') ?? 0));
 
-    if (!isPostCategory(category)) {
-      return NextResponse.json({ message: 'Invalid category.' }, { status: 400 });
+    if (!category || !isPostCategory(category)) {
+      return NextResponse.json({ message: 'Valid category is required.' }, { status: 400 });
     }
 
-    if (!isPostLanguage(language)) {
+    if (language && !isPostLanguage(language)) {
       return NextResponse.json({ message: 'Invalid language.' }, { status: 400 });
     }
 
@@ -26,9 +27,11 @@ export async function GET(request: NextRequest) {
 
     const filter = {
       category,
-      language,
+      ...(language ? { language } : {}),
       status: 'published' as const
     };
+
+    const skip = (page - 1) * limit;
 
     const [rawItems, total] = await Promise.all([
       collection
@@ -44,7 +47,7 @@ export async function GET(request: NextRequest) {
           }
         })
         .sort({ createdAt: -1 })
-        .skip(offset)
+        .skip(skip)
         .limit(limit)
         .toArray(),
       collection.countDocuments(filter)
@@ -61,13 +64,16 @@ export async function GET(request: NextRequest) {
       createdAt: item.createdAt
     }));
 
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
     return NextResponse.json({
       items,
       pagination: {
-        total,
-        offset,
+        page,
         limit,
-        hasMore: offset + rawItems.length < total
+        total,
+        totalPages,
+        hasMore: page < totalPages
       }
     });
   } catch (error) {
@@ -86,4 +92,12 @@ function clampLimit(value: number) {
   }
 
   return Math.min(MAX_LIMIT, Math.floor(value));
+}
+
+function clampPage(value: number) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return DEFAULT_PAGE;
+  }
+
+  return Math.floor(value);
 }
