@@ -169,3 +169,10 @@ Each page includes:
 - Fetches full post content from API by slug
 - Language toggle preserves the same slug while switching locale path
 - Includes SEO metadata via Next.js `generateMetadata`
+
+
+## Sitemap
+
+- Dynamic sitemap is generated at `/sitemap.xml` via `app/sitemap.ts`.
+- Includes static site pages and all published posts.
+- Each post entry includes `hreflang` alternates for English (`/en/post/[slug]`) and Hindi (`/hi/post/[slug]`).
