@@ -129,3 +129,18 @@ What it does:
 - saves valid posts into MongoDB `posts` collection
 - writes posts with `status: "published"`
 - logs per-item failures and continues safely without crashing the full run
+
+## Homepage Experience
+
+The homepage now includes a responsive content layout with three sections:
+
+- Daily News
+- Trending
+- Rochak Jaankari
+
+Each section:
+
+- fetches and shows 6 latest published posts
+- supports pagination via **Load More**
+- responds to Hindi/English language toggle in the navbar
+- uses a clean modern card-based UI
