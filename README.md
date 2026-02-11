@@ -168,7 +168,8 @@ Each page includes:
 - Routes: `/en/post/[slug]` and `/hi/post/[slug]`
 - Fetches full post content from API by slug
 - Language toggle preserves the same slug while switching locale path
-- Includes SEO metadata via Next.js `generateMetadata`
+- Includes SEO metadata via Next.js `generateMetadata` (OpenGraph + Twitter)
+- Emits JSON-LD `Article` structured data on the detail page
 
 
 ## Sitemap

@@ -30,16 +30,40 @@ export async function generateMetadata({ params }: LocalizedPostPageProps): Prom
     };
   }
 
+  const post = data.post;
+  const canonicalUrl = `/${lang}/post/${post.slug}`;
+  const alternateLang = lang === 'en' ? 'hi' : 'en';
+
   return {
-    title: data.post.metaTitle || data.post.title,
-    description: data.post.metaDescription,
-    openGraph: {
-      title: data.post.metaTitle || data.post.title,
-      description: data.post.metaDescription,
-      images: [{ url: data.post.imageUrl }]
-    },
+    title: post.metaTitle || post.title,
+    description: post.metaDescription,
     alternates: {
-      canonical: `/${lang}/post/${data.post.slug}`
+      canonical: canonicalUrl,
+      languages: {
+        en: `/en/post/${post.slug}`,
+        hi: `/hi/post/${post.slug}`
+      }
+    },
+    openGraph: {
+      title: post.metaTitle || post.title,
+      description: post.metaDescription,
+      type: 'article',
+      url: canonicalUrl,
+      siteName: 'roz-kuch-naya',
+      locale: toOgLocale(lang),
+      alternateLocale: [toOgLocale(alternateLang)],
+      images: [
+        {
+          url: post.imageUrl,
+          alt: post.title
+        }
+      ]
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.metaTitle || post.title,
+      description: post.metaDescription,
+      images: [post.imageUrl]
     }
   };
 }
@@ -58,9 +82,16 @@ export default async function LocalizedPostPage({ params }: LocalizedPostPagePro
   }
 
   const post = data.post;
+  const jsonLd = buildArticleJsonLd(post, lang);
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <nav className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/70 p-4">
         <Link href="/" className="text-sm text-slate-300 hover:text-emerald-300">
           ← Back to homepage
@@ -123,4 +154,60 @@ function formatDate(input: string) {
     month: 'short',
     year: 'numeric'
   });
+}
+
+function buildArticleJsonLd(
+  post: {
+    title: string;
+    slug: string;
+    metaTitle: string;
+    metaDescription: string;
+    imageUrl: string;
+    createdAt: string;
+  },
+  lang: PostLanguage
+) {
+  const baseUrl = getBaseUrl();
+  const url = `${baseUrl}/${lang}/post/${post.slug}`;
+  const publishedDate = toIsoDate(post.createdAt);
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.metaTitle || post.title,
+    description: post.metaDescription,
+    image: [post.imageUrl],
+    datePublished: publishedDate,
+    dateModified: publishedDate,
+    inLanguage: lang,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'roz-kuch-naya'
+    }
+  };
+}
+
+function toOgLocale(lang: PostLanguage) {
+  return lang === 'hi' ? 'hi_IN' : 'en_IN';
+}
+
+function getBaseUrl() {
+  return (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'http://localhost:3000').replace(
+    /\/$/,
+    ''
+  );
+}
+
+function toIsoDate(input: string) {
+  const date = new Date(input);
+
+  if (Number.isNaN(date.getTime())) {
+    return new Date().toISOString();
+  }
+
+  return date.toISOString();
 }
