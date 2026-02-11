@@ -1,8 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { getDatabase } from '@/lib/db/mongodb';
 import { getPostsCollection } from '@/lib/models/post';
-
-const DEFAULT_SITE_URL = 'http://localhost:3000';
+import { getBaseUrl } from '@/lib/seo';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl();
@@ -74,11 +73,4 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch {
     return staticEntries;
   }
-}
-
-function getBaseUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || DEFAULT_SITE_URL).replace(
-    /\/$/,
-    ''
-  );
 }

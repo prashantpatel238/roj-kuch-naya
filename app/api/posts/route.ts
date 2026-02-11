@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/db/mongodb';
-import { getPostsCollection, isPostCategory, isPostLanguage } from '@/lib/models/post';
+import {
+  getPostsCollection,
+  isPostCategory,
+  isPostLanguage
+} from '@/lib/models/post';
+import type { PostLanguage } from '@/lib/models/post';
 
 const DEFAULT_LIMIT = 6;
 const MAX_LIMIT = 50;
@@ -10,7 +15,7 @@ export async function GET(request: NextRequest) {
   try {
     const params = request.nextUrl.searchParams;
     const category = params.get('category');
-    const language = params.get('language');
+    const languageParam = params.get('language');
     const page = clampPage(Number(params.get('page') ?? DEFAULT_PAGE));
     const limit = clampLimit(Number(params.get('limit') ?? DEFAULT_LIMIT));
 
@@ -18,9 +23,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Valid category is required.' }, { status: 400 });
     }
 
-    if (language && !isPostLanguage(language)) {
+    if (languageParam && !isPostLanguage(languageParam)) {
       return NextResponse.json({ message: 'Invalid language.' }, { status: 400 });
     }
+
+    const language: PostLanguage | undefined = languageParam
+      ? (languageParam as PostLanguage)
+      : undefined;
 
     const db = await getDatabase();
     const collection = getPostsCollection(db);

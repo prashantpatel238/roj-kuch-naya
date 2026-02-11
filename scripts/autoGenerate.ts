@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+// @ts-nocheck
 
 const CATEGORIES = ['daily', 'trending', 'rochak'];
 const POSTS_PER_CATEGORY = 2;

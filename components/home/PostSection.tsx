@@ -98,7 +98,7 @@ export function PostSection({ title, category, language }: PostSectionProps) {
           type="button"
           onClick={() => void loadPosts()}
           disabled={loading || !hasMore}
-          className="rounded-full border border-emerald-500/40 px-5 py-2 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-xl border border-emerald-500/40 px-5 py-3 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:rounded-full sm:py-2"
         >
           {loading ? 'Loading...' : hasMore ? 'Load More' : 'No more posts'}
         </button>

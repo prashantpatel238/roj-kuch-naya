@@ -146,6 +146,7 @@ Each section:
 - supports pagination via **Load More**
 - responds to Hindi/English language toggle in the navbar
 - uses a clean modern card-based UI
+- provides a full-width mobile-friendly **Load More** button per section
 
 ## Legal & Company Pages (SEO Optimized)
 
@@ -170,6 +171,7 @@ Each page includes:
 - Language toggle preserves the same slug while switching locale path
 - Includes SEO metadata via Next.js `generateMetadata` (OpenGraph + Twitter)
 - Emits JSON-LD `Article` structured data on the detail page
+- Uses reusable SEO utilities from `lib/seo.ts` for canonical, hreflang, Twitter, and structured data generation
 
 
 ## Sitemap
@@ -177,3 +179,9 @@ Each page includes:
 - Dynamic sitemap is generated at `/sitemap.xml` via `app/sitemap.ts`.
 - Includes static site pages and all published posts.
 - Each post entry includes `hreflang` alternates for English (`/en/post/[slug]`) and Hindi (`/hi/post/[slug]`).
+
+
+## Robots
+
+- Dynamic robots file is generated at `/robots.txt` via `app/robots.ts`.
+- It allows crawling and points search engines to `/sitemap.xml`.

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/db/mongodb';
 import { getPostsCollection, isPostLanguage } from '@/lib/models/post';
+import type { PostLanguage } from '@/lib/models/post';
 
 interface RouteContext {
   params: {
@@ -11,15 +12,19 @@ interface RouteContext {
 export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
     const slug = decodeURIComponent(params.slug || '').trim();
-    const language = request.nextUrl.searchParams.get('language');
+    const languageParam = request.nextUrl.searchParams.get('language');
 
     if (!slug) {
       return NextResponse.json({ message: 'Slug is required.' }, { status: 400 });
     }
 
-    if (language && !isPostLanguage(language)) {
+    if (languageParam && !isPostLanguage(languageParam)) {
       return NextResponse.json({ message: 'Invalid language.' }, { status: 400 });
     }
+
+    const language: PostLanguage | undefined = languageParam
+      ? (languageParam as PostLanguage)
+      : undefined;
 
     const db = await getDatabase();
     const collection = getPostsCollection(db);

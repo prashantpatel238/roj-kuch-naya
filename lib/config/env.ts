@@ -1,6 +1,4 @@
-const requiredEnvVars = ['MONGODB_URI', 'MONGODB_DB'] as const;
-
-type EnvVar = (typeof requiredEnvVars)[number];
+type EnvVar = 'MONGODB_URI' | 'MONGODB_DB';
 
 function assertEnvVar(name: EnvVar): string {
   const value = process.env[name];

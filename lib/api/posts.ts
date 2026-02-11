@@ -26,7 +26,7 @@ export async function fetchPostBySlugFromApi(slug: string, language?: string) {
 
   const suffix = query.toString() ? `?${query.toString()}` : '';
   const response = await fetch(`${baseUrl}/api/posts/${encodeURIComponent(slug)}${suffix}`, {
-    next: { revalidate: 60 }
+    next: { revalidate: 120, tags: [`post:${slug}`] }
   });
 
   if (!response.ok) {
