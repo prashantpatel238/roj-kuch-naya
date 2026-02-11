@@ -13,6 +13,10 @@ interface LocalizedPostPageProps {
   };
 }
 
+export async function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: LocalizedPostPageProps): Promise<Metadata> {
   const lang = getLanguage(params.lang);
 
