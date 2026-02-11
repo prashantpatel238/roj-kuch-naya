@@ -5,10 +5,13 @@ export default function robots(): MetadataRoute.Robots {
   const baseUrl = getBaseUrl();
 
   return {
-    rules: {
-      userAgent: '*',
-      allow: '/'
-    },
+    rules: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/admin', '/internal']
+      }
+    ],
     sitemap: `${baseUrl}/sitemap.xml`
   };
 }

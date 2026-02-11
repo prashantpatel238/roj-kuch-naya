@@ -172,6 +172,7 @@ Each page includes:
 - Includes SEO metadata via Next.js `generateMetadata` (OpenGraph + Twitter)
 - Emits JSON-LD `Article` structured data on the detail page
 - Uses reusable SEO utilities from `lib/seo.ts` for canonical, hreflang, Twitter, and structured data generation
+- Shows estimated reading time based on post word count
 
 
 ## Sitemap
@@ -185,3 +186,9 @@ Each page includes:
 
 - Dynamic robots file is generated at `/robots.txt` via `app/robots.ts`.
 - It allows crawling and points search engines to `/sitemap.xml`.
+
+
+## Crawl Control
+
+- `/robots.txt` allows public pages and disallows `/admin` and `/internal`.
+- `app/admin/layout.tsx` and `app/internal/layout.tsx` include noindex/nofollow metadata for search engines.

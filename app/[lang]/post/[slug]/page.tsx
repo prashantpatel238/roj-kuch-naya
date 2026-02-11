@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { fetchPostBySlugFromApi } from '@/lib/api/posts';
 import { PostLanguage } from '@/lib/models/post';
 import { buildPostJsonLd, buildPostMetadata } from '@/lib/seo';
+import { getReadingTime } from '@/lib/reading-time';
 
 interface LocalizedPostPageProps {
   params: {
@@ -49,6 +50,7 @@ export default async function LocalizedPostPage({ params }: LocalizedPostPagePro
 
   const post = data.post;
   const jsonLd = buildPostJsonLd(post, lang);
+  const reading = getReadingTime(post.content);
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -76,7 +78,7 @@ export default async function LocalizedPostPage({ params }: LocalizedPostPagePro
       <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 sm:p-8">
         <p className="mb-3 text-xs uppercase tracking-[0.2em] text-emerald-300">{post.category}</p>
         <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">{post.title}</h1>
-        <p className="mt-3 text-sm text-slate-400">{formatDate(post.createdAt)}</p>
+        <p className="mt-3 text-sm text-slate-400">{formatDate(post.createdAt)} • {reading.minutes} min read</p>
 
         <div className="my-6 h-56 overflow-hidden rounded-xl bg-slate-800 sm:h-72">
           {/* eslint-disable-next-line @next/next/no-img-element */}
