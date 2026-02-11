@@ -27,7 +27,8 @@ jobs:
 
       # 4. Generate AI content
       - name: Run autoGenerate
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && secrets.MONGODB_URI != '' && secrets.AI_API_KEY != ''
+        continue-on-error: true
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
