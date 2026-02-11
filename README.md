@@ -87,6 +87,7 @@ Indexes ensured via `ensurePostIndexes`:
 - `GET /api/health`: Static health response.
 - `GET /api/status`: MongoDB connectivity status (`ping`) and index initialization status.
 - `GET /api/posts?category=<daily|trending|rochak>&page=<n>&limit=<n>`: returns published posts sorted by newest `createdAt` first.
+- `GET /api/posts/<slug>?language=<hi|en>`: returns a published post by slug for full article rendering.
 
 ## AI Content Service
 
@@ -160,3 +161,19 @@ Each page includes:
 - dedicated metadata title and description
 - clear heading structure
 - readable long-form content suitable for search indexing
+
+
+## Post Detail Page
+
+- Routes: `/en/post/[slug]` and `/hi/post/[slug]`
+- Fetches full post content from API by slug
+- Language toggle preserves the same slug while switching locale path
+- Includes SEO metadata via Next.js `generateMetadata` (OpenGraph + Twitter)
+- Emits JSON-LD `Article` structured data on the detail page
+
+
+## Sitemap
+
+- Dynamic sitemap is generated at `/sitemap.xml` via `app/sitemap.ts`.
+- Includes static site pages and all published posts.
+- Each post entry includes `hreflang` alternates for English (`/en/post/[slug]`) and Hindi (`/hi/post/[slug]`).

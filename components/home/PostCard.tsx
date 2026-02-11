@@ -7,6 +7,7 @@ export interface HomePost {
   metaDescription: string;
   imageUrl: string;
   createdAt: string;
+  language: 'hi' | 'en';
 }
 
 interface PostCardProps {
@@ -24,7 +25,7 @@ export function PostCard({ post }: PostCardProps) {
         <p className="text-xs text-slate-400">{formatDate(post.createdAt)}</p>
         <h3 className="text-lg font-semibold text-white">{post.title}</h3>
         <p className="text-sm text-slate-300">{post.metaDescription}</p>
-        <Link href={`/${post.slug}`} className="text-sm font-medium text-emerald-300 hover:text-emerald-200">
+        <Link href={`/${post.language}/post/${post.slug}`} className="text-sm font-medium text-emerald-300 hover:text-emerald-200">
           Read more →
         </Link>
       </div>
