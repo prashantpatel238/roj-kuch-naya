@@ -88,8 +88,12 @@ export function PostSection({ title, category, language }: PostSectionProps) {
       </div>
 
       {!loading && items.length === 0 && !error ? (
-        <p className="rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400">
-          No posts available right now.
+        <p className="rounded-lg border border-amber-700/50 bg-amber-900/20 p-4 text-sm text-amber-200">
+          No published posts found yet. Please add/generate posts in MongoDB and verify Vercel env vars
+          <code className="mx-1 rounded bg-slate-900 px-1 py-0.5 text-xs text-amber-100">MONGODB_URI</code>
+          and
+          <code className="mx-1 rounded bg-slate-900 px-1 py-0.5 text-xs text-amber-100">MONGODB_DB</code>
+          are set.
         </p>
       ) : null}
 
