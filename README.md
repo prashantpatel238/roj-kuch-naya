@@ -52,6 +52,7 @@ components/
   ui/
     StatusCard.tsx
 lib/
+  ai.ts
   config/
     env.ts
   db/
@@ -84,3 +85,15 @@ Indexes ensured via `ensurePostIndexes`:
 
 - `GET /api/health`: Static health response.
 - `GET /api/status`: MongoDB connectivity status (`ping`) and index initialization status.
+
+## AI Content Service
+
+`lib/ai.ts` provides:
+
+- `generateDelhiTopics()`: returns 10 unique Delhi-focused informational topics.
+- `generateSeoArticle(topic)`: returns a full SEO-oriented article payload with:
+  - 800-1200 word validation
+  - structured `##` (H2) and `###` (H3) sections
+  - automatic disclaimer append:
+    `This article is AI-generated for informational purposes only.`
+  - neutral informative language safeguards (no real news-source references, no brand defamation wording, no crime accusations)
