@@ -56,9 +56,31 @@ lib/
     env.ts
   db/
     mongodb.ts
+  models/
+    post.ts
 ```
+
+## MongoDB Post Model
+
+The `Post` model is defined in `lib/models/post.ts` with fields:
+
+- `title: string`
+- `slug: string` (unique)
+- `category: 'daily' | 'trending' | 'rochak'`
+- `language: 'hi' | 'en'`
+- `content: string`
+- `metaTitle: string`
+- `metaDescription: string`
+- `imageUrl: string`
+- `status: 'draft' | 'published'`
+- `createdAt: Date`
+
+Indexes ensured via `ensurePostIndexes`:
+
+- Unique index on `slug`
+- Non-unique index on `category`
 
 ## API Endpoints
 
 - `GET /api/health`: Static health response.
-- `GET /api/status`: MongoDB connectivity status (`ping`).
+- `GET /api/status`: MongoDB connectivity status (`ping`) and index initialization status.
