@@ -1,7 +1,11 @@
 type EnvVar = 'MONGODB_URI' | 'MONGODB_DB';
 
+function readEnvVar(name: EnvVar): string | undefined {
+  return process.env[name];
+}
+
 function assertEnvVar(name: EnvVar): string {
-  const value = process.env[name];
+  const value = readEnvVar(name);
 
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
@@ -11,6 +15,10 @@ function assertEnvVar(name: EnvVar): string {
 }
 
 export const env = {
-  MONGODB_URI: assertEnvVar('MONGODB_URI'),
-  MONGODB_DB: assertEnvVar('MONGODB_DB')
+  get MONGODB_URI(): string {
+    return assertEnvVar('MONGODB_URI');
+  },
+  get MONGODB_DB(): string {
+    return readEnvVar('MONGODB_DB') || 'roj-kuch-naya';
+  }
 };

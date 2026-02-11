@@ -27,6 +27,7 @@ jobs:
 
       # 4. Generate AI content
       - name: Run autoGenerate
+        if: github.event_name != 'pull_request'
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
@@ -38,6 +39,7 @@ jobs:
 
       # 6. Deploy to Vercel
       - name: Deploy to Vercel
+        if: github.event_name != 'pull_request'
         uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
