@@ -1,34 +1,32 @@
-import { MongoClient } from 'mongodb';
+import mongoose, { type Connection, type mongo } from 'mongoose';
 import { env } from '@/lib/config/env';
 import { ensurePostIndexes } from '@/lib/models/post';
 
 declare global {
   // eslint-disable-next-line no-var
-  var mongoClientPromise: Promise<MongoClient> | undefined;
+  var mongooseConnectionPromise: Promise<Connection> | undefined;
   // eslint-disable-next-line no-var
   var mongoIndexesPromise: Promise<void> | undefined;
 }
 
-const options = {};
-
-let client: MongoClient;
-let clientPromise: Promise<MongoClient>;
-
-if (process.env.NODE_ENV === 'development') {
-  if (!global.mongoClientPromise) {
-    client = new MongoClient(env.MONGODB_URI, options);
-    global.mongoClientPromise = client.connect();
+function connectToDatabase(): Promise<Connection> {
+  if (!global.mongooseConnectionPromise) {
+    global.mongooseConnectionPromise = mongoose
+      .connect(env.MONGODB_URI, { dbName: env.MONGODB_DB })
+      .then((instance) => instance.connection);
   }
 
-  clientPromise = global.mongoClientPromise;
-} else {
-  client = new MongoClient(env.MONGODB_URI, options);
-  clientPromise = client.connect();
+  return global.mongooseConnectionPromise;
 }
 
-export async function getDatabase() {
-  const connectedClient = await clientPromise;
-  return connectedClient.db(env.MONGODB_DB);
+export async function getDatabase(): Promise<mongo.Db> {
+  const connection = await connectToDatabase();
+
+  if (!connection.db) {
+    throw new Error('MongoDB connection is not initialized.');
+  }
+
+  return connection.db;
 }
 
 export async function initializeDatabaseIndexes() {
