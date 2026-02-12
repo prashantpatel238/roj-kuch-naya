@@ -25,6 +25,11 @@ interface GeneratedPost {
   language: Language;
 }
 
+type ContentContext = {
+  titles: string[];
+  summaries: string[];
+};
+
 function toSlug(value: string): string {
   const slug = value
     .toLowerCase()
@@ -115,8 +120,9 @@ function isQuotaError(error: unknown): boolean {
   );
 }
 
-function buildFallbackPost(category: Category, language: Language): GeneratedPost {
+function buildFallbackPost(category: Category, language: Language, context?: ContentContext): GeneratedPost {
   const isoDate = new Date().toISOString().slice(0, 10);
+  const contextHint = context?.titles?.[0] ? ` ${language === 'hi' ? 'संदर्भ:' : 'Context:'} ${context.titles[0]}.` : '';
 
   if (language === 'hi') {
     const titleMap: Record<Category, string> = {
@@ -135,7 +141,7 @@ function buildFallbackPost(category: Category, language: Language): GeneratedPos
       content:
         `यह ${category} श्रेणी के लिए ${isoDate} का जानकारीपूर्ण सार है। इसमें उपयोगी, सुरक्षित और तटस्थ अपडेट शामिल हैं।\n\n` +
         'इस सामग्री का उद्देश्य केवल सामान्य जानकारी देना है ताकि पाठकों को एक स्थान पर स्पष्ट और सरल जानकारी मिल सके।\n\n' +
-        'डेटा दोहराव से बचाने के लिए सिस्टम समान सामग्री को अपडेट करता है और नई जानकारी आने पर ही नया कंटेंट जोड़ता है।',
+        `डेटा दोहराव से बचाने के लिए सिस्टम समान सामग्री को अपडेट करता है और नई जानकारी आने पर ही नया कंटेंट जोड़ता है।${contextHint}`,
       metaTitle: `${title}`.slice(0, 60),
       metaDescription: `दिल्ली ${category} श्रेणी की जानकारी (${isoDate}) का संक्षिप्त सार।`.slice(0, 155)
     };
@@ -157,7 +163,7 @@ function buildFallbackPost(category: Category, language: Language): GeneratedPos
     content:
       `This is a concise ${category} information summary (${isoDate}). It contains neutral and practical updates for readers.\n\n` +
       'The goal is to provide safe, easy-to-read informational content without sensational language.\n\n' +
-      'To avoid duplicate information, identical generated entries are updated rather than inserted repeatedly.',
+      `To avoid duplicate information, identical generated entries are updated rather than inserted repeatedly.${contextHint}`,
     metaTitle: `${title}`.slice(0, 60),
     metaDescription: `Quick ${category} information update for Delhi (${isoDate}).`.slice(0, 155)
   };
@@ -172,7 +178,38 @@ async function connectMongo() {
   console.log('✅ MongoDB connected');
 }
 
-async function generatePostWithOpenAI(category: Category, language: Language): Promise<GeneratedPost> {
+async function getContentContext(category: Category, language: Language): Promise<ContentContext> {
+  const db = mongoose.connection.db;
+
+  if (!db) {
+    return { titles: [], summaries: [] };
+  }
+
+  const collection = db.collection(POSTS_COLLECTION);
+  const docs = await collection
+    .find(
+      { category, language, status: 'published' },
+      { projection: { title: 1, metaDescription: 1, createdAt: 1 } }
+    )
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .toArray();
+
+  return {
+    titles: docs
+      .map((doc) => (typeof doc.title === 'string' ? doc.title.trim() : ''))
+      .filter(Boolean),
+    summaries: docs
+      .map((doc) => (typeof doc.metaDescription === 'string' ? doc.metaDescription.trim() : ''))
+      .filter(Boolean)
+  };
+}
+
+async function generatePostWithOpenAI(
+  category: Category,
+  language: Language,
+  context: ContentContext
+): Promise<GeneratedPost> {
   if (!AI_API_KEY) {
     throw new Error('Missing environment variable: AI_API_KEY or OPENAI_API_KEY');
   }
@@ -185,7 +222,19 @@ async function generatePostWithOpenAI(category: Category, language: Language): P
     rochak: 'interesting facts and informative insights'
   };
 
-  const prompt = `Write one short, SEO-friendly ${langText} informational post for category "${category}" (${categoryHint[category]}). Topic can be from any safe domain and is not restricted to any specific place. Avoid adult/restricted content, violence, fights/conflicts, hate, crime glorification, or strongly negative themes. Keep tone neutral and useful. Return strict JSON only with fields: title, content (3 short paragraphs), metaTitle (max 60 chars), metaDescription (max 155 chars).`;
+  const prompt = `Write one short, SEO-friendly ${langText} informational post for category "${category}" (${categoryHint[category]}).
+
+Use the existing content style and theme as reference so the new content matches current site data.
+Recent titles:
+${context.titles.length > 0 ? context.titles.map((title, index) => `${index + 1}. ${title}`).join('\n') : '- No existing titles available'}
+
+Recent summaries:
+${context.summaries.length > 0 ? context.summaries.map((summary, index) => `${index + 1}. ${summary}`).join('\n') : '- No existing summaries available'}
+
+Generate a fresh variation (do not copy any existing title/content directly).
+Avoid adult/restricted content, violence, fights/conflicts, hate, crime glorification, or strongly negative themes.
+Keep tone neutral and useful.
+Return strict JSON only with fields: title, content (3 short paragraphs), metaTitle (max 60 chars), metaDescription (max 155 chars).`;
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -250,17 +299,18 @@ async function savePost(post: GeneratedPost) {
 async function generateAndSave(category: Category, language: Language) {
   let usedOpenAI = false;
   let generatedPost: GeneratedPost;
+  const context = await getContentContext(category, language);
 
   if (!AI_API_KEY) {
-    generatedPost = buildFallbackPost(category, language);
+    generatedPost = buildFallbackPost(category, language, context);
   } else {
     try {
-      generatedPost = await generatePostWithOpenAI(category, language);
+      generatedPost = await generatePostWithOpenAI(category, language, context);
       usedOpenAI = true;
     } catch (error) {
       if (isQuotaError(error)) {
         console.warn('⚠️ OpenAI quota exceeded (429). Falling back to template-based generated post.');
-        generatedPost = buildFallbackPost(category, language);
+        generatedPost = buildFallbackPost(category, language, context);
       } else {
         throw error;
       }
