@@ -48,6 +48,46 @@ function parseJsonResponse(raw: string): Omit<GeneratedPost, 'slug'> {
   };
 }
 
+function isQuotaError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const e = error as { status?: number; code?: string; type?: string; error?: { code?: string; type?: string } };
+
+  return (
+    e.status === 429 ||
+    e.code === 'insufficient_quota' ||
+    e.type === 'insufficient_quota' ||
+    e.error?.code === 'insufficient_quota' ||
+    e.error?.type === 'insufficient_quota'
+  );
+}
+
+function buildFallbackPost(): GeneratedPost {
+  const now = new Date();
+  const isoDate = now.toISOString().slice(0, 10);
+
+  const title = `दिल्ली अपडेट: ${isoDate} की बड़ी खबरें`;
+  const content = [
+    `दिल्ली में ${isoDate} को नागरिक सुविधाओं और ट्रैफिक प्रबंधन से जुड़े कई महत्वपूर्ण अपडेट सामने आए। स्थानीय प्रशासन ने प्रमुख मार्गों पर जाम कम करने के लिए अतिरिक्त इंतज़ाम करने की बात कही है।`,
+    'शहर के अलग-अलग इलाकों में सार्वजनिक सेवाओं को बेहतर बनाने के लिए विभागीय टीमें सक्रिय हैं। अधिकारियों के अनुसार, नागरिकों से मिले फीडबैक के आधार पर प्राथमिक क्षेत्रों में त्वरित सुधार की प्रक्रिया जारी है।',
+    'विशेषज्ञों का मानना है कि नियमित मॉनिटरिंग और समय पर सूचना साझा करने से लोगों को राहत मिलेगी। आने वाले दिनों में इन पहलों के असर को लेकर नई जानकारी जारी की जा सकती है।'
+  ].join('\n\n');
+
+  return {
+    title,
+    slug: toSlug(`${title}-${Date.now()}`),
+    content,
+    metaTitle: `दिल्ली न्यूज अपडेट ${isoDate}`.slice(0, 60),
+    metaDescription:
+      'दिल्ली की ताज़ा खबरें, ट्रैफिक और नागरिक सुविधाओं से जुड़े प्रमुख अपडेट का संक्षिप्त सार पढ़ें।'.slice(
+        0,
+        155
+      )
+  };
+}
+
 async function connectMongo() {
   if (!MONGODB_URI) {
     throw new Error('Missing environment variable: MONGODB_URI');
@@ -57,7 +97,7 @@ async function connectMongo() {
   console.log('✅ MongoDB connected');
 }
 
-async function generatePost(): Promise<GeneratedPost> {
+async function generatePostWithOpenAI(): Promise<GeneratedPost> {
   if (!AI_API_KEY) {
     throw new Error('Missing environment variable: AI_API_KEY');
   }
@@ -123,16 +163,32 @@ async function savePost(post: GeneratedPost) {
 
 async function main() {
   // In PR builds/secrets-restricted environments (e.g. fork PRs), skip gracefully.
-  if (!MONGODB_URI || !AI_API_KEY) {
-    console.warn(
-      '⚠️ Skipping auto generation: required secrets are missing (MONGODB_URI and/or AI_API_KEY).'
-    );
+  if (!MONGODB_URI) {
+    console.warn('⚠️ Skipping auto generation: required secret MONGODB_URI is missing.');
     return;
   }
 
   try {
     await connectMongo();
-    const generatedPost = await generatePost();
+
+    let generatedPost: GeneratedPost;
+
+    if (!AI_API_KEY) {
+      console.warn('⚠️ AI_API_KEY missing. Falling back to template-based generated post.');
+      generatedPost = buildFallbackPost();
+    } else {
+      try {
+        generatedPost = await generatePostWithOpenAI();
+      } catch (error) {
+        if (isQuotaError(error)) {
+          console.warn('⚠️ OpenAI quota exceeded (429). Falling back to template-based generated post.');
+          generatedPost = buildFallbackPost();
+        } else {
+          throw error;
+        }
+      }
+    }
+
     await savePost(generatedPost);
   } catch (error) {
     console.error('❌ Auto generation failed:', error);
