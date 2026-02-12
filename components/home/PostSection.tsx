@@ -60,6 +60,7 @@ export function PostSection({ title, category, language }: PostSectionProps) {
     setError(null);
 
     const nextPage = reset ? 1 : page;
+    const requestedLanguage = reset ? language : activeLanguageFilter;
 
     try {
       if (reset) {
@@ -85,6 +86,10 @@ export function PostSection({ title, category, language }: PostSectionProps) {
       setItems((prev) => [...prev, ...data.items]);
       setPage(nextPage + 1);
       setHasMore(data.pagination.hasMore);
+
+      if (reset) {
+        setActiveLanguageFilter(requestedLanguage);
+      }
     } catch (requestError) {
       const message = requestError instanceof Error ? requestError.message : 'Unknown error';
       setError(message);
