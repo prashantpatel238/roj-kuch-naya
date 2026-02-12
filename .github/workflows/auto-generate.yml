@@ -1,9 +1,12 @@
 name: Auto Generate Content
 
 on:
-  schedule:
-    - cron: '0 * * * *'
   workflow_dispatch:
+    inputs:
+      mongodb_db:
+        description: 'MongoDB database name'
+        required: false
+        default: 'roj-kuch-naya'
 
 jobs:
   auto-generate:
@@ -26,5 +29,5 @@ jobs:
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
-          MONGODB_DB: roz-kuch-naya
+          MONGODB_DB: ${{ inputs.mongodb_db }}
         run: npm run generate
