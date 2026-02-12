@@ -107,9 +107,9 @@ function buildFallbackPost(category: Category, language: Language): GeneratedPos
 
   if (language === 'hi') {
     const titleMap: Record<Category, string> = {
-      daily: `दिल्ली दैनिक अपडेट: ${isoDate}`,
-      trending: `दिल्ली में ट्रेंडिंग विषय: ${isoDate}`,
-      rochak: `दिल्ली की रोचक जानकारी: ${isoDate}`
+      daily: `दैनिक जानकारी अपडेट: ${isoDate}`,
+      trending: `आज के ट्रेंडिंग विषय: ${isoDate}`,
+      rochak: `रोचक जानकारी और तथ्य: ${isoDate}`
     };
 
     const title = titleMap[category];
@@ -120,7 +120,7 @@ function buildFallbackPost(category: Category, language: Language): GeneratedPos
       category,
       language,
       content:
-        `यह ${category} श्रेणी के लिए ${isoDate} का जानकारीपूर्ण सार है। इसमें दिल्ली से जुड़े उपयोगी, सुरक्षित और तटस्थ अपडेट शामिल हैं।\n\n` +
+        `यह ${category} श्रेणी के लिए ${isoDate} का जानकारीपूर्ण सार है। इसमें उपयोगी, सुरक्षित और तटस्थ अपडेट शामिल हैं।\n\n` +
         'इस सामग्री का उद्देश्य केवल सामान्य जानकारी देना है ताकि पाठकों को एक स्थान पर स्पष्ट और सरल जानकारी मिल सके।\n\n' +
         'डेटा दोहराव से बचाने के लिए सिस्टम समान सामग्री को अपडेट करता है और नई जानकारी आने पर ही नया कंटेंट जोड़ता है।',
       metaTitle: `${title}`.slice(0, 60),
@@ -129,9 +129,9 @@ function buildFallbackPost(category: Category, language: Language): GeneratedPos
   }
 
   const titleMap: Record<Category, string> = {
-    daily: `Delhi Daily Update: ${isoDate}`,
-    trending: `Delhi Trending Topics: ${isoDate}`,
-    rochak: `Interesting Delhi Insights: ${isoDate}`
+    daily: `Daily Information Update: ${isoDate}`,
+    trending: `Today's Trending Topics: ${isoDate}`,
+    rochak: `Interesting Insights & Facts: ${isoDate}`
   };
 
   const title = titleMap[category];
@@ -142,7 +142,7 @@ function buildFallbackPost(category: Category, language: Language): GeneratedPos
     category,
     language,
     content:
-      `This is a concise ${category} information summary for Delhi (${isoDate}). It contains neutral and practical updates for readers.\n\n` +
+      `This is a concise ${category} information summary (${isoDate}). It contains neutral and practical updates for readers.\n\n` +
       'The goal is to provide safe, easy-to-read informational content without sensational language.\n\n' +
       'To avoid duplicate information, identical generated entries are updated rather than inserted repeatedly.',
     metaTitle: `${title}`.slice(0, 60),
@@ -167,12 +167,12 @@ async function generatePostWithOpenAI(category: Category, language: Language): P
   const openai = new OpenAI({ apiKey: AI_API_KEY });
   const langText = language === 'hi' ? 'Hindi' : 'English';
   const categoryHint: Record<Category, string> = {
-    daily: 'daily city updates',
-    trending: 'trending city topics',
-    rochak: 'interesting facts and useful local insights'
+    daily: 'daily useful information',
+    trending: 'currently trending topics',
+    rochak: 'interesting facts and informative insights'
   };
 
-  const prompt = `Write one short, SEO-friendly ${langText} informational post about Delhi for category "${category}" (${categoryHint[category]}). Return strict JSON only with fields: title, content (3 short paragraphs), metaTitle (max 60 chars), metaDescription (max 155 chars).`;
+  const prompt = `Write one short, SEO-friendly ${langText} informational post for category "${category}" (${categoryHint[category]}). Topic can be from any safe domain and is not restricted to any specific place. Avoid adult/restricted content, violence, fights/conflicts, hate, crime glorification, or strongly negative themes. Keep tone neutral and useful. Return strict JSON only with fields: title, content (3 short paragraphs), metaTitle (max 60 chars), metaDescription (max 155 chars).`;
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
