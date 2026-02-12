@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
@@ -5,9 +6,14 @@ import OpenAI from 'openai';
 dotenv.config();
 
 const MONGODB_URI = process.env.MONGODB_URI;
-const AI_API_KEY = process.env.AI_API_KEY;
+const AI_API_KEY = process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
 const MONGODB_DB = process.env.MONGODB_DB || 'roj-kuch-naya';
 const POSTS_COLLECTION = 'posts';
+const CATEGORIES = ['daily', 'trending', 'rochak'] as const;
+const LANGUAGES = ['hi', 'en'] as const;
+
+type Category = (typeof CATEGORIES)[number];
+type Language = (typeof LANGUAGES)[number];
 
 interface GeneratedPost {
   title: string;
@@ -15,26 +21,46 @@ interface GeneratedPost {
   content: string;
   metaTitle: string;
   metaDescription: string;
+  category: Category;
+  language: Language;
 }
 
 function toSlug(value: string): string {
-  return value
+  const slug = value
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/[^\p{Letter}\p{Number}\s-]/gu, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
     .slice(0, 80);
+
+  if (!slug) {
+    return `post-${Date.now()}`;
+  }
+
+  return slug;
 }
 
-function parseJsonResponse(raw: string): Omit<GeneratedPost, 'slug'> {
+function normalizeForHash(value: string): string {
+  return value.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function buildDedupeHash(post: Pick<GeneratedPost, 'title' | 'content' | 'category' | 'language'>): string {
+  const normalized = [post.category, post.language, normalizeForHash(post.title), normalizeForHash(post.content)]
+    .join('|')
+    .slice(0, 3000);
+
+  return crypto.createHash('sha256').update(normalized).digest('hex');
+}
+
+function parseJsonResponse(raw: string): Omit<GeneratedPost, 'slug' | 'category' | 'language'> {
   const trimmed = raw.trim();
 
-  // Handle both plain JSON and markdown fenced JSON.
   const fencedMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
   const jsonText = fencedMatch ? fencedMatch[1] : trimmed;
 
-  const parsed = JSON.parse(jsonText) as Partial<Omit<GeneratedPost, 'slug'>>;
+  const parsed = JSON.parse(jsonText) as Partial<Omit<GeneratedPost, 'slug' | 'category' | 'language'>>;
 
   if (!parsed.title || !parsed.content || !parsed.metaTitle || !parsed.metaDescription) {
     throw new Error('OpenAI response JSON missing required fields.');
@@ -64,27 +90,63 @@ function isQuotaError(error: unknown): boolean {
   );
 }
 
-function buildFallbackPost(): GeneratedPost {
-  const now = new Date();
-  const isoDate = now.toISOString().slice(0, 10);
+function getImageForCategory(category: Category): string {
+  if (category === 'trending') {
+    return 'https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=1200&q=80';
+  }
 
-  const title = `दिल्ली अपडेट: ${isoDate} की बड़ी खबरें`;
-  const content = [
-    `दिल्ली में ${isoDate} को नागरिक सुविधाओं और ट्रैफिक प्रबंधन से जुड़े कई महत्वपूर्ण अपडेट सामने आए। स्थानीय प्रशासन ने प्रमुख मार्गों पर जाम कम करने के लिए अतिरिक्त इंतज़ाम करने की बात कही है।`,
-    'शहर के अलग-अलग इलाकों में सार्वजनिक सेवाओं को बेहतर बनाने के लिए विभागीय टीमें सक्रिय हैं। अधिकारियों के अनुसार, नागरिकों से मिले फीडबैक के आधार पर प्राथमिक क्षेत्रों में त्वरित सुधार की प्रक्रिया जारी है।',
-    'विशेषज्ञों का मानना है कि नियमित मॉनिटरिंग और समय पर सूचना साझा करने से लोगों को राहत मिलेगी। आने वाले दिनों में इन पहलों के असर को लेकर नई जानकारी जारी की जा सकती है।'
-  ].join('\n\n');
+  if (category === 'rochak') {
+    return 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80';
+  }
+
+  return 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=1200&q=80';
+}
+
+function buildFallbackPost(category: Category, language: Language): GeneratedPost {
+  const isoDate = new Date().toISOString().slice(0, 10);
+
+  if (language === 'hi') {
+    const titleMap: Record<Category, string> = {
+      daily: `दिल्ली दैनिक अपडेट: ${isoDate}`,
+      trending: `दिल्ली में ट्रेंडिंग विषय: ${isoDate}`,
+      rochak: `दिल्ली की रोचक जानकारी: ${isoDate}`
+    };
+
+    const title = titleMap[category];
+
+    return {
+      title,
+      slug: toSlug(`${category}-hi-${title}`),
+      category,
+      language,
+      content:
+        `यह ${category} श्रेणी के लिए ${isoDate} का जानकारीपूर्ण सार है। इसमें दिल्ली से जुड़े उपयोगी, सुरक्षित और तटस्थ अपडेट शामिल हैं।\n\n` +
+        'इस सामग्री का उद्देश्य केवल सामान्य जानकारी देना है ताकि पाठकों को एक स्थान पर स्पष्ट और सरल जानकारी मिल सके।\n\n' +
+        'डेटा दोहराव से बचाने के लिए सिस्टम समान सामग्री को अपडेट करता है और नई जानकारी आने पर ही नया कंटेंट जोड़ता है।',
+      metaTitle: `${title}`.slice(0, 60),
+      metaDescription: `दिल्ली ${category} श्रेणी की जानकारी (${isoDate}) का संक्षिप्त सार।`.slice(0, 155)
+    };
+  }
+
+  const titleMap: Record<Category, string> = {
+    daily: `Delhi Daily Update: ${isoDate}`,
+    trending: `Delhi Trending Topics: ${isoDate}`,
+    rochak: `Interesting Delhi Insights: ${isoDate}`
+  };
+
+  const title = titleMap[category];
 
   return {
     title,
-    slug: toSlug(`${title}-${Date.now()}`),
-    content,
-    metaTitle: `दिल्ली न्यूज अपडेट ${isoDate}`.slice(0, 60),
-    metaDescription:
-      'दिल्ली की ताज़ा खबरें, ट्रैफिक और नागरिक सुविधाओं से जुड़े प्रमुख अपडेट का संक्षिप्त सार पढ़ें।'.slice(
-        0,
-        155
-      )
+    slug: toSlug(`${category}-en-${title}`),
+    category,
+    language,
+    content:
+      `This is a concise ${category} information summary for Delhi (${isoDate}). It contains neutral and practical updates for readers.\n\n` +
+      'The goal is to provide safe, easy-to-read informational content without sensational language.\n\n' +
+      'To avoid duplicate information, identical generated entries are updated rather than inserted repeatedly.',
+    metaTitle: `${title}`.slice(0, 60),
+    metaDescription: `Quick ${category} information update for Delhi (${isoDate}).`.slice(0, 155)
   };
 }
 
@@ -97,14 +159,20 @@ async function connectMongo() {
   console.log('✅ MongoDB connected');
 }
 
-async function generatePostWithOpenAI(): Promise<GeneratedPost> {
+async function generatePostWithOpenAI(category: Category, language: Language): Promise<GeneratedPost> {
   if (!AI_API_KEY) {
-    throw new Error('Missing environment variable: AI_API_KEY');
+    throw new Error('Missing environment variable: AI_API_KEY or OPENAI_API_KEY');
   }
 
   const openai = new OpenAI({ apiKey: AI_API_KEY });
-  const prompt =
-    'Write one short, SEO-friendly Hindi news post about Delhi with fields: title, content (3 short paragraphs), metaTitle (max 60 chars), metaDescription (max 155 chars). Return strict JSON only.';
+  const langText = language === 'hi' ? 'Hindi' : 'English';
+  const categoryHint: Record<Category, string> = {
+    daily: 'daily city updates',
+    trending: 'trending city topics',
+    rochak: 'interesting facts and useful local insights'
+  };
+
+  const prompt = `Write one short, SEO-friendly ${langText} informational post about Delhi for category "${category}" (${categoryHint[category]}). Return strict JSON only with fields: title, content (3 short paragraphs), metaTitle (max 60 chars), metaDescription (max 155 chars).`;
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -123,7 +191,9 @@ async function generatePostWithOpenAI(): Promise<GeneratedPost> {
 
   return {
     ...parsed,
-    slug: toSlug(parsed.title)
+    category,
+    language,
+    slug: toSlug(`${category}-${language}-${parsed.title}`)
   };
 }
 
@@ -135,21 +205,24 @@ async function savePost(post: GeneratedPost) {
   }
 
   const collection = db.collection(POSTS_COLLECTION);
-
+  const dedupeHash = buildDedupeHash(post);
   const now = new Date();
+
   const result = await collection.updateOne(
-    { slug: post.slug },
+    {
+      $or: [{ dedupeHash }, { slug: post.slug }]
+    },
     {
       $set: {
         title: post.title,
         slug: post.slug,
-        category: 'daily',
-        language: 'hi',
+        category: post.category,
+        language: post.language,
         content: post.content,
         metaTitle: post.metaTitle,
         metaDescription: post.metaDescription,
-        imageUrl:
-          'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=1200&q=80',
+        dedupeHash,
+        imageUrl: getImageForCategory(post.category),
         status: 'published',
         createdAt: now
       }
@@ -158,11 +231,34 @@ async function savePost(post: GeneratedPost) {
   );
 
   const action = result.upsertedCount > 0 ? 'inserted' : 'updated';
-  console.log(`✅ Post ${action}: ${post.slug}`);
+  console.log(`✅ Post ${action}: [${post.category}/${post.language}] ${post.slug}`);
+}
+
+async function generateAndSave(category: Category, language: Language) {
+  let usedOpenAI = false;
+  let generatedPost: GeneratedPost;
+
+  if (!AI_API_KEY) {
+    generatedPost = buildFallbackPost(category, language);
+  } else {
+    try {
+      generatedPost = await generatePostWithOpenAI(category, language);
+      usedOpenAI = true;
+    } catch (error) {
+      if (isQuotaError(error)) {
+        console.warn('⚠️ OpenAI quota exceeded (429). Falling back to template-based generated post.');
+        generatedPost = buildFallbackPost(category, language);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  console.log(`ℹ️ Content source [${category}/${language}]: ${usedOpenAI ? 'openai' : 'fallback-template'}`);
+  await savePost(generatedPost);
 }
 
 async function main() {
-  // In PR builds/secrets-restricted environments (e.g. fork PRs), skip gracefully.
   if (!MONGODB_URI) {
     console.warn('⚠️ Skipping auto generation: required secret MONGODB_URI is missing.');
     return;
@@ -171,25 +267,13 @@ async function main() {
   try {
     await connectMongo();
 
-    let generatedPost: GeneratedPost;
+    console.log(`ℹ️ OpenAI request mode: ${AI_API_KEY ? 'enabled' : 'disabled (fallback mode)'}`);
 
-    if (!AI_API_KEY) {
-      console.warn('⚠️ AI_API_KEY missing. Falling back to template-based generated post.');
-      generatedPost = buildFallbackPost();
-    } else {
-      try {
-        generatedPost = await generatePostWithOpenAI();
-      } catch (error) {
-        if (isQuotaError(error)) {
-          console.warn('⚠️ OpenAI quota exceeded (429). Falling back to template-based generated post.');
-          generatedPost = buildFallbackPost();
-        } else {
-          throw error;
-        }
+    for (const category of CATEGORIES) {
+      for (const language of LANGUAGES) {
+        await generateAndSave(category, language);
       }
     }
-
-    await savePost(generatedPost);
   } catch (error) {
     console.error('❌ Auto generation failed:', error);
     process.exitCode = 1;
