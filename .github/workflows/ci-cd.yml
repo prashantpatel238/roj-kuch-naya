@@ -39,7 +39,7 @@ jobs:
       - name: Run AI content automation script
         id: ai_generate
         continue-on-error: true
-        run: npx ts-node scripts/autoGenerate.ts
+        run: node --loader ts-node/esm scripts/autoGenerate.ts
 
       - name: Log AI generation failure (non-blocking)
         if: steps.ai_generate.outcome == 'failure'

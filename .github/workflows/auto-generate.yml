@@ -27,4 +27,4 @@ jobs:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           MONGODB_DB: roz-kuch-naya
-        run: npx ts-node scripts/autoGenerate.ts || node scripts/autoGenerate.ts
+        run: npm run generate
