@@ -26,6 +26,7 @@ export function PostSection({ title, category, language }: PostSectionProps) {
   const [items, setItems] = useState<HomePost[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [activeLanguageFilter, setActiveLanguageFilter] = useState<PostLanguage | null>(language);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,14 +40,18 @@ export function PostSection({ title, category, language }: PostSectionProps) {
     setError(null);
 
     const nextPage = reset ? 1 : page;
+    const requestedLanguage = reset ? language : activeLanguageFilter;
 
     try {
       const query = new URLSearchParams({
         category,
-        language,
         limit: String(PAGE_SIZE),
         page: String(nextPage)
       });
+
+      if (requestedLanguage) {
+        query.set('language', requestedLanguage);
+      }
 
       const response = await fetch(`/api/posts?${query.toString()}`);
 
@@ -56,9 +61,19 @@ export function PostSection({ title, category, language }: PostSectionProps) {
 
       const data = (await response.json()) as PostsResponse;
 
+      if (reset && requestedLanguage && data.items.length === 0) {
+        setActiveLanguageFilter(null);
+        await loadPosts({ reset: true });
+        return;
+      }
+
       setItems((prev) => (reset ? data.items : [...prev, ...data.items]));
       setPage(nextPage + 1);
       setHasMore(data.pagination.hasMore);
+
+      if (reset) {
+        setActiveLanguageFilter(requestedLanguage);
+      }
     } catch (requestError) {
       const message = requestError instanceof Error ? requestError.message : 'Unknown error';
       setError(message);
