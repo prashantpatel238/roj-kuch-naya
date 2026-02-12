@@ -17,7 +17,7 @@ export default function Hero() {
         </p>
 
         <Link
-          href="/daily-quiz"
+          href="/quiz"
           className="mt-10 inline-flex items-center justify-center rounded-xl bg-indigo-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
         >
           Start Today&apos;s Quiz

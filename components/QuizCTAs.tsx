@@ -4,13 +4,13 @@ const quizCards = [
   {
     title: 'Daily Quiz – 15 Questions',
     description: 'Sharpen your concepts every day with a quick 15-question practice set.',
-    href: '/daily-quiz',
+    href: '/quiz',
     buttonLabel: 'Start Daily Quiz'
   },
   {
     title: 'Weekly Quiz – 30 Questions',
     description: 'Test your weekly progress with a longer 30-question challenge round.',
-    href: '/weekly-quiz',
+    href: '/quiz',
     buttonLabel: 'Start Weekly Quiz'
   }
 ];
