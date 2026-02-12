@@ -35,6 +35,26 @@ export function PostSection({ title, category, language }: PostSectionProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, language]);
 
+  async function requestPosts(pageToLoad: number, languageFilter?: PostLanguage) {
+    const query = new URLSearchParams({
+      category,
+      limit: String(PAGE_SIZE),
+      page: String(pageToLoad)
+    });
+
+    if (languageFilter) {
+      query.set('language', languageFilter);
+    }
+
+    const response = await fetch(`/api/posts?${query.toString()}`);
+
+    if (!response.ok) {
+      throw new Error('Unable to load posts.');
+    }
+
+    return (await response.json()) as PostsResponse;
+  }
+
   async function loadPosts({ reset = false }: { reset?: boolean } = {}) {
     setLoading(true);
     setError(null);
@@ -43,31 +63,27 @@ export function PostSection({ title, category, language }: PostSectionProps) {
     const requestedLanguage = reset ? language : activeLanguageFilter;
 
     try {
-      const query = new URLSearchParams({
-        category,
-        limit: String(PAGE_SIZE),
-        page: String(nextPage)
-      });
+      if (reset) {
+        const filteredData = await requestPosts(nextPage, language);
 
-      if (requestedLanguage) {
-        query.set('language', requestedLanguage);
-      }
+        if (filteredData.items.length > 0) {
+          setItems(filteredData.items);
+          setHasMore(filteredData.pagination.hasMore);
+          setPage(nextPage + 1);
+          setActiveLanguageFilter(language);
+          return;
+        }
 
-      const response = await fetch(`/api/posts?${query.toString()}`);
-
-      if (!response.ok) {
-        throw new Error('Unable to load posts.');
-      }
-
-      const data = (await response.json()) as PostsResponse;
-
-      if (reset && requestedLanguage && data.items.length === 0) {
+        const fallbackData = await requestPosts(nextPage);
+        setItems(fallbackData.items);
+        setHasMore(fallbackData.pagination.hasMore);
+        setPage(nextPage + 1);
         setActiveLanguageFilter(null);
-        await loadPosts({ reset: true });
         return;
       }
 
-      setItems((prev) => (reset ? data.items : [...prev, ...data.items]));
+      const data = await requestPosts(nextPage, activeLanguageFilter ?? undefined);
+      setItems((prev) => [...prev, ...data.items]);
       setPage(nextPage + 1);
       setHasMore(data.pagination.hasMore);
 
@@ -79,6 +95,8 @@ export function PostSection({ title, category, language }: PostSectionProps) {
       setError(message);
       if (reset) {
         setItems([]);
+        setHasMore(true);
+        setPage(1);
       }
     } finally {
       setLoading(false);
