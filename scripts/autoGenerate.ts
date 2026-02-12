@@ -183,8 +183,6 @@ async function main() {
 
     console.log(`ℹ️ OpenAI request mode: ${AI_API_KEY ? 'enabled' : 'disabled (fallback mode)'}`);
 
-    console.log(`ℹ️ OpenAI request mode: ${AI_API_KEY ? 'enabled' : 'disabled (fallback mode)'}`);
-
     if (!AI_API_KEY) {
       console.warn('⚠️ AI_API_KEY/OPENAI_API_KEY missing. Falling back to template-based generated post.');
       generatedPost = buildFallbackPost();

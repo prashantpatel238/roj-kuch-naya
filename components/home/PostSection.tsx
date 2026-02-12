@@ -46,7 +46,7 @@ export function PostSection({ title, category, language }: PostSectionProps) {
       query.set('language', languageFilter);
     }
 
-    const response = await fetch(`/api/posts?${query.toString()}`);
+    const response = await fetch(`/api/posts?${query.toString()}`, { cache: 'no-store' });
 
     if (!response.ok) {
       throw new Error('Unable to load posts.');
