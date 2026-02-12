@@ -192,3 +192,73 @@ Each page includes:
 
 - `/robots.txt` allows public pages and disallows `/admin` and `/internal`.
 - `app/admin/layout.tsx` and `app/internal/layout.tsx` include noindex/nofollow metadata for search engines.
+
+## Testing `GET /api/currentAffairs`
+
+Use these steps to test the current affairs API route locally and after deployment.
+
+### 1) Local testing (development)
+
+1. Start the app:
+
+   ```bash
+   npm run dev
+   ```
+
+2. Open this URL in your browser or API client:
+
+   ```text
+   http://localhost:3000/api/currentAffairs
+   ```
+
+3. Or test via curl:
+
+   ```bash
+   curl -s http://localhost:3000/api/currentAffairs
+   ```
+
+### 2) After deployment (production)
+
+Replace `<your-domain>` with your live domain:
+
+```bash
+curl -s https://<your-domain>/api/currentAffairs
+```
+
+You can also test from a browser:
+
+```text
+https://<your-domain>/api/currentAffairs
+```
+
+### 3) Verify JSON structure
+
+Expected top-level response:
+
+```json
+{
+  "items": [
+    {
+      "_id": "...",
+      "title": "...",
+      "summary": "...",
+      "date": "...",
+      "slug": "..."
+    }
+  ]
+}
+```
+
+Validation checklist:
+
+- Response is valid JSON.
+- Top-level key `items` exists and is an array.
+- Array contains up to 3 most recent documents (sorted by `date` descending).
+- Each item includes safe display fields such as `title`, `summary`, and `date`.
+
+Optional quick checks with `jq`:
+
+```bash
+curl -s http://localhost:3000/api/currentAffairs | jq '.items | length'
+curl -s http://localhost:3000/api/currentAffairs | jq '.items[0] | {title, summary, date, slug}'
+```
