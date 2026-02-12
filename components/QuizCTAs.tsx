@@ -22,7 +22,7 @@ export default function QuizCTAs() {
         {quizCards.map((card) => (
           <article
             key={card.title}
-            className="flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            className="flex h-full flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
           >
             <div>
               <h3 className="text-xl font-bold text-slate-900">{card.title}</h3>

@@ -1,16 +1,11 @@
 import Link from 'next/link';
 
-const archiveDates = [
-  '12 Feb 2026',
-  '05 Feb 2026',
-  '29 Jan 2026',
-  '22 Jan 2026'
-];
+const archiveDates = ['12 Feb 2026', '05 Feb 2026', '29 Jan 2026', '22 Jan 2026'];
 
 export default function ArchiveSection() {
   return (
     <section className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
         <h2 className="text-2xl font-bold text-slate-900">Archive</h2>
         <p className="mt-2 text-sm text-slate-600">Browse previous quiz and current affairs updates.</p>
 
@@ -20,7 +15,7 @@ export default function ArchiveSection() {
               <span className="text-sm font-medium text-slate-800">{date}</span>
               <Link
                 href="/archive"
-                className="text-sm font-semibold text-indigo-600 transition hover:text-indigo-700"
+                className="rounded-md px-2 py-1 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50 hover:text-indigo-700"
               >
                 View
               </Link>
