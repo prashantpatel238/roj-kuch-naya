@@ -5,7 +5,7 @@ import OpenAI from 'openai';
 dotenv.config();
 
 const MONGODB_URI = process.env.MONGODB_URI;
-const AI_API_KEY = process.env.AI_API_KEY;
+const AI_API_KEY = process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
 const MONGODB_DB = process.env.MONGODB_DB || 'roj-kuch-naya';
 const POSTS_COLLECTION = 'posts';
 
@@ -18,13 +18,20 @@ interface GeneratedPost {
 }
 
 function toSlug(value: string): string {
-  return value
+  const slug = value
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/[^\p{Letter}\p{Number}\s-]/gu, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
     .slice(0, 80);
+
+  if (!slug) {
+    return `post-${Date.now()}`;
+  }
+
+  return slug;
 }
 
 function parseJsonResponse(raw: string): Omit<GeneratedPost, 'slug'> {
@@ -99,7 +106,7 @@ async function connectMongo() {
 
 async function generatePostWithOpenAI(): Promise<GeneratedPost> {
   if (!AI_API_KEY) {
-    throw new Error('Missing environment variable: AI_API_KEY');
+    throw new Error('Missing environment variable: AI_API_KEY or OPENAI_API_KEY');
   }
 
   const openai = new OpenAI({ apiKey: AI_API_KEY });
@@ -172,13 +179,17 @@ async function main() {
     await connectMongo();
 
     let generatedPost: GeneratedPost;
+    let usedOpenAI = false;
+
+    console.log(`ℹ️ OpenAI request mode: ${AI_API_KEY ? 'enabled' : 'disabled (fallback mode)'}`);
 
     if (!AI_API_KEY) {
-      console.warn('⚠️ AI_API_KEY missing. Falling back to template-based generated post.');
+      console.warn('⚠️ AI_API_KEY/OPENAI_API_KEY missing. Falling back to template-based generated post.');
       generatedPost = buildFallbackPost();
     } else {
       try {
         generatedPost = await generatePostWithOpenAI();
+        usedOpenAI = true;
       } catch (error) {
         if (isQuotaError(error)) {
           console.warn('⚠️ OpenAI quota exceeded (429). Falling back to template-based generated post.');
@@ -188,6 +199,8 @@ async function main() {
         }
       }
     }
+
+    console.log(`ℹ️ Content source: ${usedOpenAI ? 'openai' : 'fallback-template'}`);
 
     await savePost(generatedPost);
   } catch (error) {
