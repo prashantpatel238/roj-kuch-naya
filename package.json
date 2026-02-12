@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "generate": "ts-node scripts/autoGenerate.ts"
+    "generate": "node --loader ts-node/esm scripts/autoGenerate.ts"
   },
   "dependencies": {
     "dotenv": "^16.3.1",

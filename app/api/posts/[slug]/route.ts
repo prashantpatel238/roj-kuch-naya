@@ -9,6 +9,10 @@ interface RouteContext {
   };
 }
 
+export async function generateStaticParams() {
+  return [];
+}
+
 export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
     const slug = decodeURIComponent(params.slug || '').trim();
