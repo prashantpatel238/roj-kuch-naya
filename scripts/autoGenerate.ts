@@ -54,6 +54,30 @@ function buildDedupeHash(post: Pick<GeneratedPost, 'title' | 'content' | 'catego
   return crypto.createHash('sha256').update(normalized).digest('hex');
 }
 
+
+function buildImageKeywords(post: Pick<GeneratedPost, 'title' | 'content' | 'category'>): string {
+  const source = `${post.title} ${post.content}`.toLowerCase();
+  const words = source
+    .replace(/[^\p{Letter}\p{Number}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter((word) => word.length > 3)
+    .slice(0, 6);
+
+  if (words.length === 0) {
+    return post.category;
+  }
+
+  return words.join(',');
+}
+
+function getImageForPost(post: Pick<GeneratedPost, 'title' | 'content' | 'category' | 'language'>): string {
+  const keywords = buildImageKeywords(post);
+  const seed = buildDedupeHash(post).slice(0, 12);
+
+  return `https://source.unsplash.com/1600x900/?${encodeURIComponent(keywords)}&sig=${seed}`;
+}
+
+
 function parseJsonResponse(raw: string): Omit<GeneratedPost, 'slug' | 'category' | 'language'> {
   const trimmed = raw.trim();
 
@@ -88,18 +112,6 @@ function isQuotaError(error: unknown): boolean {
     e.error?.code === 'insufficient_quota' ||
     e.error?.type === 'insufficient_quota'
   );
-}
-
-function getImageForCategory(category: Category): string {
-  if (category === 'trending') {
-    return 'https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=1200&q=80';
-  }
-
-  if (category === 'rochak') {
-    return 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80';
-  }
-
-  return 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=1200&q=80';
 }
 
 function buildFallbackPost(category: Category, language: Language): GeneratedPost {
@@ -222,7 +234,7 @@ async function savePost(post: GeneratedPost) {
         metaTitle: post.metaTitle,
         metaDescription: post.metaDescription,
         dedupeHash,
-        imageUrl: getImageForCategory(post.category),
+        imageUrl: getImageForPost(post),
         status: 'published',
         createdAt: now
       }
