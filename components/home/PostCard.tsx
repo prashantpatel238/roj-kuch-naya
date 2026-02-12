@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useState } from 'react';
 
 export interface HomePost {
   _id: string;
@@ -15,11 +16,20 @@ interface PostCardProps {
 }
 
 export function PostCard({ post }: PostCardProps) {
+  const fallbackImage = `https://picsum.photos/seed/${encodeURIComponent(post.slug)}/800/450`;
+  const [imageSrc, setImageSrc] = useState(post.imageUrl || fallbackImage);
+
   return (
     <article className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/70 shadow-sm">
       <div className="h-40 w-full bg-slate-800">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={post.imageUrl} alt={post.title} className="h-full w-full object-cover" loading="lazy" />
+        <img
+          src={imageSrc}
+          alt={post.title}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          onError={() => setImageSrc(fallbackImage)}
+        />
       </div>
       <div className="space-y-3 p-4">
         <p className="text-xs text-slate-400">{formatDate(post.createdAt)}</p>
