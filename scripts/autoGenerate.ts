@@ -73,8 +73,9 @@ function buildImageKeywords(post: Pick<GeneratedPost, 'title' | 'content' | 'cat
 function getImageForPost(post: Pick<GeneratedPost, 'title' | 'content' | 'category' | 'language'>): string {
   const keywords = buildImageKeywords(post);
   const seed = buildDedupeHash(post).slice(0, 12);
+  const prompt = `${post.category} ${keywords}`;
 
-  return `https://source.unsplash.com/1600x900/?${encodeURIComponent(keywords)}&sig=${seed}`;
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1600&height=900&seed=${seed}&nologo=true`;
 }
 
 
