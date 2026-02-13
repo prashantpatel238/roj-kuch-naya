@@ -1,6 +1,6 @@
 import mongoose, { type Connection, type mongo } from 'mongoose';
-import { env } from '@/lib/config/env';
-import { ensurePostIndexes } from '@/lib/models/post';
+import { env } from '../config/env.ts';
+import { ensurePostIndexes } from '../models/post.ts';
 
 declare global {
   // eslint-disable-next-line no-var

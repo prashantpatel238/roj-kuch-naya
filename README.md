@@ -262,3 +262,33 @@ Optional quick checks with `jq`:
 curl -s http://localhost:3000/api/currentAffairs | jq '.items | length'
 curl -s http://localhost:3000/api/currentAffairs | jq '.items[0] | {title, summary, date, slug}'
 ```
+
+
+## One-Time Posts Cleanup
+
+Use this only when you intentionally want to permanently delete **all** documents from `posts`.
+
+### Run locally (manual)
+
+```bash
+MONGODB_URI="<your-mongodb-uri>" MONGODB_DB="roj-kuch-naya" npm run clean:db
+```
+
+The script will:
+- connect using the shared MongoDB utility (`lib/db/mongodb.ts`)
+- delete all documents from `roj-kuch-naya.posts`
+- print how many documents were deleted
+
+### Run from GitHub Actions (manual)
+
+A manual workflow is available at:
+- **Actions → One-Time Clean Posts Collection → Run workflow**
+
+Inputs:
+- `confirm`: must be exactly `DELETE_POSTS`
+- `mongodb_db`: defaults to `roj-kuch-naya`
+
+Required repository secret:
+- `MONGODB_URI`
+
+The workflow is **not scheduled** and only runs when manually triggered.

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { getDatabase } from '@/lib/db/mongodb';
+import { getDatabase } from '../lib/db/mongodb.ts';
 
 const TARGET_DB_NAME = 'roj-kuch-naya';
 const POSTS_COLLECTION = 'posts';
